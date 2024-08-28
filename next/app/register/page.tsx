@@ -20,16 +20,25 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 
 // Define the form schema
-const formSchema = z.object({
-  email: z.string().email({ message: 'Invalid email address' }),
-  password: z
-    .string()
-    .min(6, { message: 'Password must be at least 6 characters' }),
-});
+const formSchema = z
+  .object({
+    name: z
+      .string()
+      .min(3, { message: 'Username must be at least 3 characters' }),
+    email: z.string().email({ message: 'Invalid email address' }),
+    password: z
+      .string()
+      .min(6, { message: 'Password must be at least 6 characters' }),
+    password_confirmation: z.string(),
+  })
+  .refine((data) => data.password === data.password_confirmation, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type FormData = z.infer<typeof formSchema>;
 
-export default function Login() {
+export default function Register() {
   const {
     register,
     handleSubmit,
@@ -38,11 +47,11 @@ export default function Login() {
     resolver: zodResolver(formSchema),
   });
 
-  const { login } = useAuth();
+  const { register: registerCall } = useAuth();
 
   const onSubmit = async (data: FormData) => {
     try {
-      await login(data);
+      await registerCall(data);
     } catch (error) {
       console.error('Login failed:', error);
       toast.error('Login failed');
@@ -54,20 +63,32 @@ export default function Login() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-center">
-            Login
+            Register
           </CardTitle>
           <CardDescription className="text-center">
-            Enter your credentials to access your account
+            Create a new account to get started
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                type="text"
+                placeholder="johndoe"
+                {...register('name')}
+              />
+              {errors.name && (
+                <p className="text-sm text-red-500">{errors.name.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="m@example.com"
+                placeholder="john@example.com"
                 {...register('email')}
               />
               {errors.email && (
@@ -83,8 +104,21 @@ export default function Login() {
                 </p>
               )}
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                {...register('password_confirmation')}
+              />
+              {errors.password_confirmation && (
+                <p className="text-sm text-red-500">
+                  {errors.password_confirmation.message}
+                </p>
+              )}
+            </div>
             <Button className="w-full" type="submit">
-              Sign In
+              Register
             </Button>
           </form>
           <div className="relative">
@@ -93,7 +127,7 @@ export default function Login() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or continue with
+                Or register with
               </span>
             </div>
           </div>
@@ -136,9 +170,9 @@ export default function Login() {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            {`Don't have an account? `}
-            <Link className="text-primary hover:underline" href="/register">
-              Register
+            Already have an account?{' '}
+            <Link className="text-primary hover:underline" href="/login">
+              Login
             </Link>
           </p>
         </CardFooter>
