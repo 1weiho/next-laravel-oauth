@@ -4,22 +4,32 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserProvider;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialiteController extends Controller
 {
-    public function googleRedirect(): RedirectResponse
+    protected $allowedProviders = ['google', 'github'];
+
+    public function redirect(string $provider): RedirectResponse|JsonResponse
     {
-        return Socialite::driver('google')->redirect();
+        if (! in_array($provider, $this->allowedProviders)) {
+            return response()->json(['error' => 'Provider not supported.'], 400);
+        }
+
+        return Socialite::driver($provider)->redirect();
     }
 
-    public function googleCallback(): RedirectResponse
+    public function callback(string $provider): RedirectResponse|JsonResponse
     {
-        $oauthUser = Socialite::driver('google')->user();
+        if (! in_array($provider, $this->allowedProviders)) {
+            return response()->json(['error' => 'Provider not supported.'], 400);
+        }
 
-        $provider = 'google';
+        $oauthUser = Socialite::driver($provider)->user();
+
         $providerId = $oauthUser->getId();
 
         $userProvider = UserProvider::where('provider', $provider)
