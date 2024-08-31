@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\UserProvider;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -50,6 +51,8 @@ class SocialiteController extends Controller
                 'name' => $oauthUser->getName(),
                 'email' => $oauthUser->getEmail(),
             ]);
+
+            event(new Registered($user));
         }
 
         $user->userProviders()->create([
